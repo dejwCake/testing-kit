@@ -14,17 +14,6 @@ trait TestCaseContext
 {
     private ?Context $context = null;
 
-    private function resolveContextFromAttributes(): void
-    {
-        [$classAttributes, $methodAttributes] = $this->getTestCaseAttributes();
-
-        $this->context = new Context();
-        $this->setContextFromAttributes($classAttributes);
-        $this->setContextFromAttributes($methodAttributes);
-
-        $this->setUserFromContext($this->context);
-    }
-
     /**
      * @return array{0: ReflectionAttribute[], 1: ReflectionAttribute[]}
      */
@@ -46,6 +35,17 @@ trait TestCaseContext
         }
 
         return $this->name();
+    }
+
+    private function resolveContextFromAttributes(): void
+    {
+        [$classAttributes, $methodAttributes] = $this->getTestCaseAttributes();
+
+        $this->context = new Context();
+        $this->setContextFromAttributes($classAttributes);
+        $this->setContextFromAttributes($methodAttributes);
+
+        $this->setUserFromContext($this->context);
     }
 
     /**

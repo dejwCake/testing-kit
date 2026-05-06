@@ -24,11 +24,8 @@ class UserFactory
         );
     }
 
-    public function getAuthenticatedUser(
-        int $userId,
-        ?string $email = null,
-        ?string $password = null,
-    ): Authenticatable {
+    public function getAuthenticatedUser(int $userId, ?string $email = null, ?string $password = null,): Authenticatable
+    {
         $cacheKey = $email ?? 'null';
 
         if (!isset($this->users[$userId][$cacheKey])) {

@@ -8,6 +8,14 @@ use DOMDocument;
 
 trait SnapshotAsserts
 {
+    public function removeWhitespaceInEmptyRows(string $mainContent): string
+    {
+        $tmp = explode("\n", $mainContent);
+        $tmp = array_map(static fn (string $line) => rtrim($line), $tmp);
+
+        return implode("\n", $tmp);
+    }
+
     protected function assertMatchesViewSnapshot(string $htmlResponse): void
     {
         $dom = new DOMDocument('1.0', 'utf-8');
@@ -75,13 +83,5 @@ trait SnapshotAsserts
     private function remove(string $mainContent, string $pattern): string
     {
         return preg_replace($pattern, '', $mainContent);
-    }
-
-    public function removeWhitespaceInEmptyRows(string $mainContent): string
-    {
-        $tmp = explode("\n", $mainContent);
-        $tmp = array_map(static fn (string $line) => rtrim($line), $tmp);
-
-        return implode("\n", $tmp);
     }
 }

@@ -47,7 +47,7 @@ final class Util
     /**
      * All http method verbs as known by swagger.
      */
-    public const OPERATIONS = ['get', 'post', 'put', 'patch', 'delete', 'options', 'head', 'trace'];
+    public const array OPERATIONS = ['get', 'post', 'put', 'patch', 'delete', 'options', 'head', 'trace'];
 
     /**
      * Return an existing PathItem object from $api->paths[] having its member path set to $path.
