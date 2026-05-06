@@ -1,0 +1,32 @@
+<?xml version="1.0"?>
+<ruleset name="Application">
+    <description>Package coding standard.</description>
+
+    <arg value="nsp" />
+    <arg name="cache" value=".phpcs.cache" />
+
+    <config name="php_version" value="80500" />
+
+    <file>config/</file>
+    <file>src/</file>
+    <file>tests/</file>
+
+    <!--not exactly nice, but working solution-->
+    <rule ref="/root/.composer/vendor/dejwcake/php-code-style/base.phpcs.xml">
+    </rule>
+
+    <rule ref="SlevomatCodingStandard.Complexity.Cognitive">
+        <properties>
+            <property name="maxComplexity" value="10"/>
+        </properties>
+    </rule>
+
+    <rule ref="SlevomatCodingStandard.Files.TypeNameMatchesFileName">
+        <properties>
+            <property name="rootNamespaces" type="array">
+                <element key="src" value="DejwCake\TestingKit"/>
+                <element key="tests" value="DejwCake\TestingKit\Tests"/>
+            </property>
+        </properties>
+    </rule>
+</ruleset>

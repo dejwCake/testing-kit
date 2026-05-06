@@ -1,7 +1,0 @@
-services:
-  test:
-    environment:
-      PHP_XDEBUG_ENABLED: 1
-      PHP_IDE_CONFIG: "serverName=test"
-      XDEBUG_CONFIG: >-
-        client_host=host.docker.internal

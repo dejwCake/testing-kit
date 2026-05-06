@@ -1,0 +1,102 @@
+name: CI
+
+on:
+  push:
+  pull_request:
+
+env:
+  COMPOSER_NO_INTERACTION: 1
+
+jobs:
+  phpcs:
+    name: PHPCS
+    runs-on: ubuntu-latest
+    container:
+      image: dejwcake/phpqa8.5:1
+    steps:
+      - uses: actions/checkout@v5
+      - run: git config --global --add safe.directory "$GITHUB_WORKSPACE"
+      - run: composer install --prefer-dist
+      - run: phpcs -s --extensions=php
+
+  phpcs-compatibility:
+    name: PHPCS Compatibility
+    runs-on: ubuntu-latest
+    container:
+      image: dejwcake/phpqa8.5:1
+    steps:
+      - uses: actions/checkout@v5
+      - run: git config --global --add safe.directory "$GITHUB_WORKSPACE"
+      - run: composer install --prefer-dist
+      - run: phpcs --standard=.phpcs.compatibility.xml --cache=.phpcs.cache
+
+  phpstan:
+    name: PHPStan
+    runs-on: ubuntu-latest
+    container:
+      image: dejwcake/phpqa8.5:1
+    steps:
+      - uses: actions/checkout@v5
+      - run: git config --global --add safe.directory "$GITHUB_WORKSPACE"
+      - run: composer install --prefer-dist
+      - run: phpstan analyse --configuration=phpstan.neon
+
+  phpmd:
+    name: PHPMD
+    runs-on: ubuntu-latest
+    container:
+      image: dejwcake/phpqa8.5:1
+    steps:
+      - uses: actions/checkout@v5
+      - run: git config --global --add safe.directory "$GITHUB_WORKSPACE"
+      - run: composer install --prefer-dist
+      - run: >-
+          phpmd
+          ./config,./src,./tests
+          text phpmd.xml
+          --suffixes php
+          --baseline-file phpmd.baseline.xml
+
+  tests:
+    name: Tests
+    needs: [phpcs, phpcs-compatibility, phpstan, phpmd]
+    runs-on: ubuntu-latest
+    container:
+      image: dejwcake/php8.5:1
+      env:
+        DB_CONNECTION: pgsql
+        DB_HOST: pgsql
+        DB_PORT: 5432
+        DB_DATABASE: laravel
+        DB_USERNAME: root
+        DB_PASSWORD: bestsecret
+    services:
+      pgsql:
+        image: dejwcake/postgres18:1
+        env:
+          POSTGRES_DB: laravel
+          POSTGRES_USER: root
+          POSTGRES_PASSWORD: bestsecret
+          PGPASSWORD: bestsecret
+        options: >-
+          --health-cmd="pg_isready -U root -d laravel"
+          --health-interval=10s
+          --health-timeout=5s
+          --health-retries=5
+      mysql:
+        image: dejwcake/mariadb12.1:1
+        env:
+          MYSQL_DATABASE: laravel
+          MYSQL_USER: laravel
+          MYSQL_PASSWORD: bestsecret
+          MYSQL_ROOT_PASSWORD: bestsecret
+        options: >-
+          --health-cmd="mariadb-admin ping -h 127.0.0.1 -u root -pbestsecret"
+          --health-interval=10s
+          --health-timeout=5s
+          --health-retries=5
+    steps:
+      - uses: actions/checkout@v5
+      - run: git config --global --add safe.directory "$GITHUB_WORKSPACE"
+      - run: composer install --prefer-dist
+      - run: vendor/bin/phpunit

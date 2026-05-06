@@ -21,13 +21,13 @@
     "require": {
         "php": "^8.5",
         "composer-runtime-api": "^2.0",
-        "illuminate/support": "^12.0",
+        "illuminate/support": "^13.0",
         "league/openapi-psr7-validator": "^0.22",
         "mockery/mockery": "^1.6",
         "nyholm/psr7": "^1.8",
-        "spatie/phpunit-snapshot-assertions": "^5.1",
-        "symfony/psr-http-message-bridge": "^7.2",
-        "zircote/swagger-php": "^4.0 || ^5.0"
+        "spatie/phpunit-snapshot-assertions": "^5.4",
+        "symfony/psr-http-message-bridge": "^8.0",
+        "zircote/swagger-php": "^6.1"
     },
     "autoload": {
         "psr-4": {
@@ -48,7 +48,5 @@
                 "DejwCake\\TestingKit\\TestingKitServiceProvider"
             ]
         }
-    },
-    "minimum-stability": "dev",
-    "prefer-stable": true
+    }
 }

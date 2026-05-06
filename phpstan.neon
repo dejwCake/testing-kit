@@ -1,0 +1,25 @@
+includes:
+	- phpstan-baseline.neon
+	- ./vendor/larastan/larastan/extension.neon
+
+parameters:
+    level: 5
+    phpVersion: 80500
+    reportUnmatchedIgnoredErrors: false
+    treatPhpDocTypesAsCertain: false
+    type_coverage:
+        return: 75
+        param: 75
+        property: 75
+        constant: 75
+
+    tmpDir: .phpstan.cache
+
+    paths:
+        - ./config
+        - ./src
+        - ./tests
+
+    ignoreErrors:
+
+    excludePaths:
