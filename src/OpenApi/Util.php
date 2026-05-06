@@ -6,11 +6,19 @@ namespace DejwCake\TestingKit\OpenApi;
 
 use ArrayObject;
 use Illuminate\Support\Collection;
+use InvalidArgumentException;
 use OpenApi\Annotations as OA;
 use OpenApi\Context;
 use OpenApi\Generator;
 
+use function array_key_exists;
+use function count;
+use function get_class_vars;
+use function in_array;
+use function is_array;
+use function is_int;
 use function is_string;
+use function strtolower;
 
 /**
  * Class Util.
@@ -58,7 +66,10 @@ final class Util
      */
     public static function getPath(OA\OpenApi $api, string $path): OA\PathItem
     {
-        return self::getIndexedCollectionItem($api, OA\PathItem::class, $path);
+        $pathItem = self::getIndexedCollectionItem($api, OA\PathItem::class, $path);
+        assert($pathItem instanceof OA\PathItem);
+
+        return $pathItem;
     }
 
     /**
@@ -91,7 +102,10 @@ final class Util
             $api->components = new OA\Components([]);
         }
 
-        return self::getIndexedCollectionItem($api->components, OA\Schema::class, $schema);
+        $schemaItem = self::getIndexedCollectionItem($api->components, OA\Schema::class, $schema);
+        assert($schemaItem instanceof OA\Schema);
+
+        return $schemaItem;
     }
 
     /**
@@ -106,7 +120,10 @@ final class Util
      */
     public static function getProperty(OA\Schema $schema, string $property): OA\Property
     {
-        return self::getIndexedCollectionItem($schema, OA\Property::class, $property);
+        $propertyItem = self::getIndexedCollectionItem($schema, OA\Property::class, $property);
+        assert($propertyItem instanceof OA\Property);
+
+        return $propertyItem;
     }
 
     /**
@@ -123,9 +140,12 @@ final class Util
      */
     public static function getOperation(OA\PathItem $path, string $method): OA\Operation
     {
-        $class = array_keys($path::$_nested, \strtolower($method), true)[0];
+        $class = array_keys($path::$_nested, strtolower($method), true)[0];
 
-        return self::getChild($path, $class, ['path' => $path->path]);
+        $operation = self::getChild($path, $class, ['path' => $path->path]);
+        assert($operation instanceof OA\Operation);
+
+        return $operation;
     }
 
     /**
@@ -141,7 +161,10 @@ final class Util
      */
     public static function getOperationParameter(OA\Operation $operation, string $name, string $in): OA\Parameter
     {
-        return self::getCollectionItem($operation, OA\Parameter::class, ['name' => $name, 'in' => $in]);
+        $parameter = self::getCollectionItem($operation, OA\Parameter::class, ['name' => $name, 'in' => $in]);
+        assert($parameter instanceof OA\Parameter);
+
+        return $parameter;
     }
 
     /**
@@ -257,12 +280,12 @@ final class Util
     /**
      * Search for an Annotation within the $collection that has its member $index set to $value.
      */
-    public static function searchIndexedCollectionItem(
-        array $collection,
-        string $member,
-        mixed $value,
-    ): false|int|string {
-        return array_search($value, array_column($collection, $member), true);
+    public static function searchIndexedCollectionItem(array $collection, string $member, mixed $value): false|int
+    {
+        $key = array_search($value, array_column($collection, $member), true);
+        assert($key === false || is_int($key));
+
+        return $key;
     }
 
     /**
@@ -279,7 +302,7 @@ final class Util
             $parent->{$collection} = [];
         }
 
-        $key = \count($parent->{$collection} ?: []);
+        $key = count($parent->{$collection} ?: []);
         $parent->{$collection}[$key] = self::createChild($parent, $class, $properties);
 
         return $key;
@@ -288,7 +311,7 @@ final class Util
     /**
      * Create a new Object of $class with members $properties and set the context parent to be $parent.
      *
-     * @throws \InvalidArgumentException at an attempt to pass in properties that are found in $parent::$_nested
+     * @throws InvalidArgumentException at an attempt to pass in properties that are found in $parent::$_nested
      */
     public static function createChild(
         OA\AbstractAnnotation $parent,
@@ -298,7 +321,7 @@ final class Util
         $nesting = self::getNestingIndexes($class);
 
         if (count(array_intersect(array_keys($properties), $nesting))) {
-            throw new \InvalidArgumentException('Nesting Annotations is not supported.');
+            throw new InvalidArgumentException('Nesting Annotations is not supported.');
         }
 
         return new $class(
@@ -326,42 +349,67 @@ final class Util
      */
     public static function merge(
         OA\AbstractAnnotation $annotation,
-        array|\ArrayObject|OA\AbstractAnnotation $from,
+        array|ArrayObject|OA\AbstractAnnotation $from,
         bool $overwrite = false,
     ): void {
-        if (\is_array($from)) {
+        if (is_array($from)) {
             self::mergeFromArray($annotation, $from, $overwrite);
-        } elseif (\is_a($from, OA\AbstractAnnotation::class)) {
-            assert($from instanceof OA\AbstractAnnotation);
-            self::mergeFromArray($annotation, json_decode(json_encode($from), true), $overwrite);
-        } elseif (\is_a($from, \ArrayObject::class)) {
-            assert($from instanceof \ArrayObject);
-            self::mergeFromArray($annotation, $from->getArrayCopy(), $overwrite);
+
+            return;
         }
+
+        if ($from instanceof OA\AbstractAnnotation) {
+            self::mergeFromArray($annotation, json_decode((string) json_encode($from), true), $overwrite);
+
+            return;
+        }
+
+        self::mergeFromArray($annotation, $from->getArrayCopy(), $overwrite);
     }
 
     /**
      * @return array<string>
      */
-    //phpcs:disable SlevomatCodingStandard.Complexity.Cognitive.ComplexityTooHigh
     public static function determinePossiblePaths(string $path): array
     {
         $segments = array_reverse(explode('/', $path));
 
-        $requiredPathPrefix = '';
+        [$requiredPathPrefix, $remainingSegments] = self::extractRequiredPrefix($segments);
+        [$optionalSegments, $invalidSegments] = self::splitOptionalAndInvalid($remainingSegments);
+        $requiredPathPrefix = self::appendInvalidSegmentsToPrefix($requiredPathPrefix, $invalidSegments);
+
+        return self::buildPossiblePaths($requiredPathPrefix, $optionalSegments);
+    }
+
+    /**
+     * Pops required segments off the end of $segments, stops at the first optional ("?}") segment.
+     *
+     * @param array<int, string> $segments
+     * @return array{0: string, 1: array<int, string>}
+     */
+    private static function extractRequiredPrefix(array $segments): array
+    {
+        $prefix = '';
 
         while (count($segments) > 0) {
             $segment = array_pop($segments);
-            if (!str_ends_with($segment, '?}')) {
-                $requiredPathPrefix .= ($requiredPathPrefix !== '' ? '/' : '') . $segment;
+            if (str_ends_with($segment, '?}')) {
+                $segments[] = $segment;
 
-                continue;
+                break;
             }
-            $segments[] = $segment;
-
-            break;
+            $prefix = self::joinPath($prefix, $segment);
         }
 
+        return [$prefix, $segments];
+    }
+
+    /**
+     * @param array<int, string> $segments
+     * @return array{0: array<int, string>, 1: array<int, string>}
+     */
+    private static function splitOptionalAndInvalid(array $segments): array
+    {
         $optionalSegments = [];
         $invalidSegments = [];
 
@@ -374,42 +422,79 @@ final class Util
             $invalidSegments[] = $segment;
         }
 
+        return [$optionalSegments, $invalidSegments];
+    }
+
+    /**
+     * @param array<int, string> $invalidSegments
+     */
+    private static function appendInvalidSegmentsToPrefix(string $prefix, array $invalidSegments): string
+    {
         while (count($invalidSegments) > 0) {
             $segment = array_pop($invalidSegments);
-            if (!str_ends_with($segment, '?}')) {
-                $requiredPathPrefix .= ($requiredPathPrefix !== '' ? '/' : '') . $segment;
-
-                continue;
-            }
-            $updatedSegment = substr($segment, 0, -2) . '}';
-            $requiredPathPrefix .= ($requiredPathPrefix !== '' ? '/' : '') . $updatedSegment;
+            $prefix = self::joinPath(
+                $prefix,
+                str_ends_with($segment, '?}') ? substr($segment, 0, -2) . '}' : $segment,
+            );
         }
 
+        return $prefix;
+    }
+
+    /**
+     * @param array<int, string> $optionalSegments
+     * @return array<int, string>
+     */
+    private static function buildPossiblePaths(string $requiredPathPrefix, array $optionalSegments): array
+    {
         $possiblePaths = [$requiredPathPrefix];
         $optionalPath = $requiredPathPrefix;
 
         while (count($optionalSegments) > 0) {
             $segment = array_pop($optionalSegments);
-            $updatedSegment = substr($segment, 0, -2) . '}';
-            $optionalPath .= ($optionalPath !== '' ? '/' : '') . $updatedSegment;
+            $optionalPath = self::joinPath($optionalPath, substr($segment, 0, -2) . '}');
             $possiblePaths[] = $optionalPath;
         }
 
         return $possiblePaths;
     }
-    //phpcs:enable SlevomatCodingStandard.Complexity.Cognitive.ComplexityTooHigh
+
+    private static function joinPath(string $prefix, string $segment): string
+    {
+        return $prefix === '' ? $segment : $prefix . '/' . $segment;
+    }
 
     private static function mergeFromArray(OA\AbstractAnnotation $annotation, array $properties, bool $overwrite): void
     {
+        $done = self::mergeNestedFromArray($annotation, $properties, $overwrite);
+
+        $defaults = get_class_vars($annotation::class);
+        $done = array_merge($done, self::mergeTypesFromArray($annotation, $properties, $defaults, $overwrite));
+
+        self::mergeRemainingFromArray($annotation, $properties, $defaults, $done, $overwrite);
+    }
+
+    /**
+     * @return array<int, string>
+     */
+    private static function mergeNestedFromArray(
+        OA\AbstractAnnotation $annotation,
+        array $properties,
+        bool $overwrite,
+    ): array {
         $done = [];
 
         foreach ($annotation::$_nested as $className => $propertyName) {
-            if (\is_string($propertyName)) {
+            if (is_string($propertyName)) {
                 if (array_key_exists($propertyName, $properties)) {
                     self::mergeChild($annotation, $className, $properties[$propertyName], $overwrite);
                     $done[] = $propertyName;
                 }
-            } elseif (\array_key_exists($propertyName[0], $properties)) {
+
+                continue;
+            }
+
+            if (array_key_exists($propertyName[0], $properties)) {
                 $collection = $propertyName[0];
                 $property = $propertyName[1] ?? null;
                 self::mergeCollection($annotation, $className, $property, $properties[$collection], $overwrite);
@@ -417,7 +502,19 @@ final class Util
             }
         }
 
-        $defaults = \get_class_vars($annotation::class);
+        return $done;
+    }
+
+    /**
+     * @return array<int, string>
+     */
+    private static function mergeTypesFromArray(
+        OA\AbstractAnnotation $annotation,
+        array $properties,
+        array $defaults,
+        bool $overwrite,
+    ): array {
+        $done = [];
 
         foreach ($annotation::$_types as $propertyName => $type) {
             if (array_key_exists($propertyName, $properties)) {
@@ -426,11 +523,24 @@ final class Util
             }
         }
 
+        return $done;
+    }
+
+    /**
+     * @param array<int, string> $done
+     */
+    private static function mergeRemainingFromArray(
+        OA\AbstractAnnotation $annotation,
+        array $properties,
+        array $defaults,
+        array $done,
+        bool $overwrite,
+    ): void {
         foreach ($properties as $propertyName => $value) {
             if ($propertyName === '$ref') {
                 $propertyName = 'ref';
             }
-            if (!\in_array($propertyName, $done, true)) {
+            if (!in_array($propertyName, $done, true)) {
                 self::mergeProperty($annotation, $propertyName, $value, $defaults[$propertyName], $overwrite);
             }
         }
@@ -459,25 +569,60 @@ final class Util
         bool $overwrite,
     ): void {
         if ($property !== null) {
-            foreach ($items as $prop => $value) {
-                $child = self::getIndexedCollectionItem($annotation, $className, (string) $prop);
-                self::merge($child, $value);
-            }
-        } else {
-            $nesting = self::getNestingIndexes($className);
-            foreach ($items as $props) {
-                $create = [];
-                $merge = [];
-                foreach ($props as $k => $v) {
-                    if (\in_array($k, $nesting, true)) {
-                        $merge[$k] = $v;
-                    } else {
-                        $create[$k] = $v;
-                    }
-                }
-                self::merge(self::getCollectionItem($annotation, $className, $create), $merge, $overwrite);
+            self::mergeIndexedCollectionItems($annotation, $className, $items);
+
+            return;
+        }
+
+        self::mergeNonIndexedCollectionItems($annotation, $className, $items, $overwrite);
+    }
+
+    /** @phpcsSuppress SlevomatCodingStandard.TypeHints.ParameterTypeHint.MissingAnyTypeHint */
+    private static function mergeIndexedCollectionItems(
+        OA\AbstractAnnotation $annotation,
+        string $className,
+        $items,
+    ): void {
+        foreach ($items as $prop => $value) {
+            $child = self::getIndexedCollectionItem($annotation, $className, (string) $prop);
+            self::merge($child, $value);
+        }
+    }
+
+    /** @phpcsSuppress SlevomatCodingStandard.TypeHints.ParameterTypeHint.MissingAnyTypeHint */
+    private static function mergeNonIndexedCollectionItems(
+        OA\AbstractAnnotation $annotation,
+        string $className,
+        $items,
+        bool $overwrite,
+    ): void {
+        $nesting = self::getNestingIndexes($className);
+
+        foreach ($items as $props) {
+            [$create, $merge] = self::splitNestedProps($props, $nesting);
+            self::merge(self::getCollectionItem($annotation, $className, $create), $merge, $overwrite);
+        }
+    }
+
+    /**
+     * @param array<string> $nesting
+     * @return array{0: array<string|int, mixed>, 1: array<string|int, mixed>}
+     * @phpcsSuppress SlevomatCodingStandard.TypeHints.DisallowMixedTypeHint.DisallowedMixedTypeHint
+     */
+    private static function splitNestedProps(iterable $props, array $nesting): array
+    {
+        $create = [];
+        $merge = [];
+
+        foreach ($props as $k => $v) {
+            if (in_array($k, $nesting, true)) {
+                $merge[$k] = $v;
+            } else {
+                $create[$k] = $v;
             }
         }
+
+        return [$create, $merge];
     }
 
     /** @phpcsSuppress SlevomatCodingStandard.TypeHints.ParameterTypeHint.MissingAnyTypeHint */
@@ -489,7 +634,7 @@ final class Util
         array $defaults,
         bool $overwrite,
     ): void {
-        if (is_string($type) && strpos($type, '[') === 0) {
+        if (is_string($type) && str_starts_with($type, '[')) {
             $innerType = substr($type, 1, -1);
 
             if (!$annotation->{$propertyName} || $annotation->{$propertyName} === Generator::UNDEFINED) {
@@ -511,15 +656,17 @@ final class Util
                 $annotation->{$propertyName}[] = $annot = self::createChild($annotation, $innerType, []);
                 self::merge($annot, $child, $overwrite);
             }
-        } else {
-            self::mergeProperty(
-                $annotation,
-                $propertyName,
-                $properties[$propertyName],
-                $defaults[$propertyName],
-                $overwrite,
-            );
+
+            return;
         }
+
+        self::mergeProperty(
+            $annotation,
+            $propertyName,
+            $properties[$propertyName],
+            $defaults[$propertyName],
+            $overwrite,
+        );
     }
 
     /** @phpcsSuppress SlevomatCodingStandard.TypeHints.ParameterTypeHint.MissingAnyTypeHint */
@@ -539,7 +686,7 @@ final class Util
     private static function getNestingIndexes(string $class): array
     {
         return array_values(array_map(
-            static fn ($value) => \is_array($value)
+            static fn ($value) => is_array($value)
                     ? $value[0]
                     : $value,
             $class::$_nested,

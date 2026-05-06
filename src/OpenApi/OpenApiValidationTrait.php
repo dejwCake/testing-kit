@@ -18,20 +18,23 @@ use Symfony\Bridge\PsrHttpMessage\Factory\PsrHttpFactory;
 
 trait OpenApiValidationTrait
 {
-    private static ?ResponseValidator $validator = null;
+    private ?ResponseValidator $validator = null;
 
     protected function initializeOpenApiValidator(
         string $pathToSpecs,
         bool $regenerateSchema = false,
         bool $forceRecreate = false,
     ): void {
-        if (static::$validator === null || $forceRecreate) {
-            if ($regenerateSchema) {
-                $command = config('testing-kit.openapi.regenerate_command', 'l5-swagger:generate');
-                $this->artisan($command);
-            }
-            static::$validator = (new ValidatorBuilder())->fromJsonFile($pathToSpecs)->getResponseValidator();
+        if ($this->validator !== null && !$forceRecreate) {
+            return;
         }
+
+        if ($regenerateSchema) {
+            $command = config('testing-kit.openapi.regenerate_command', 'l5-swagger:generate');
+            $this->artisan($command);
+        }
+
+        $this->validator = (new ValidatorBuilder())->fromJsonFile($pathToSpecs)->getResponseValidator();
     }
 
     /**
@@ -92,8 +95,10 @@ trait OpenApiValidationTrait
         ResponseInterface $response,
         ?string $message = null,
     ): bool {
+        assert($this->validator instanceof ResponseValidator);
+
         try {
-            static::$validator->validate($operation, $response);
+            $this->validator->validate($operation, $response);
 
             return true;
         } catch (ValidationFailed $validationFailed) {

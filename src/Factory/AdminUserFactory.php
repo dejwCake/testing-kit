@@ -4,16 +4,20 @@ declare(strict_types=1);
 
 namespace DejwCake\TestingKit\Factory;
 
-use Illuminate\Container\Container;
 use Illuminate\Contracts\Auth\Authenticatable;
 use Illuminate\Contracts\Hashing\Hasher;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
+use RuntimeException;
 
-class AdminUserFactory
+final class AdminUserFactory
 {
     /** @var array<int, array<string, Authenticatable>> */
     private array $adminUsers = [];
+
+    public function __construct(private readonly Hasher $hasher)
+    {
+    }
 
     public function getAdminUser(int $userId, ?string $password = null): Authenticatable
     {
@@ -38,7 +42,7 @@ class AdminUserFactory
         return $this->adminUsers[$userId][$cacheKey];
     }
 
-    protected function createAdminUser(int $userId, ?string $email = null, ?string $password = null): Authenticatable
+    private function createAdminUser(int $userId, ?string $email = null, ?string $password = null): Authenticatable
     {
         $userData = [
             'id' => $userId,
@@ -49,12 +53,11 @@ class AdminUserFactory
         }
 
         if ($password !== null) {
-            $hasher = Container::getInstance()->make(Hasher::class);
-            assert($hasher instanceof Hasher);
-            $userData['password'] = $hasher->make($password);
+            $userData['password'] = $this->hasher->make($password);
         }
 
         $modelClass = $this->getAdminUserModelClass();
+        /** @phpstan-ignore staticMethod.notFound (HasFactory trait check enforced at runtime) */
         $factory = $modelClass::factory();
 
         $adminUser = $factory->create($userData);
@@ -65,20 +68,19 @@ class AdminUserFactory
 
     /**
      * @return class-string<Model&Authenticatable>
-     * @phpstan-ignore-next-line generalized in tests
      */
-    protected function getAdminUserModelClass(): string
+    private function getAdminUserModelClass(): string
     {
         $class = (string) config('testing-kit.admin_user_model');
 
         if (!class_exists($class)) {
-            throw new \RuntimeException(
+            throw new RuntimeException(
                 sprintf('Admin user model `%s` configured in testing-kit.admin_user_model does not exist.', $class),
             );
         }
 
         if (!in_array(HasFactory::class, class_uses_recursive($class), true)) {
-            throw new \RuntimeException(
+            throw new RuntimeException(
                 sprintf('Admin user model `%s` must use the HasFactory trait.', $class),
             );
         }

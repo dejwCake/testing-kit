@@ -3,8 +3,8 @@
 declare(strict_types=1);
 
 return [
-    'user_model' => \App\Models\User::class,
-    'admin_user_model' => \Brackets\AdminAuth\Models\AdminUser::class,
+    'user_model' => 'App\\Models\\User',
+    'admin_user_model' => 'Brackets\\AdminAuth\\Models\\AdminUser',
 
     'authenticated_user_id' => 123,
     'dummy_csrf_token' => 'csrf-token-mock',

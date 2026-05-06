@@ -4,16 +4,20 @@ declare(strict_types=1);
 
 namespace DejwCake\TestingKit\Factory;
 
-use Illuminate\Container\Container;
 use Illuminate\Contracts\Auth\Authenticatable;
 use Illuminate\Contracts\Hashing\Hasher;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
+use RuntimeException;
 
-class UserFactory
+final class UserFactory
 {
     /** @var array<int, array<string, Authenticatable>> */
     private array $users = [];
+
+    public function __construct(private readonly Hasher $hasher)
+    {
+    }
 
     public function getCustomer(int $userId, ?string $password = null): Authenticatable
     {
@@ -24,7 +28,7 @@ class UserFactory
         );
     }
 
-    public function getAuthenticatedUser(int $userId, ?string $email = null, ?string $password = null,): Authenticatable
+    public function getAuthenticatedUser(int $userId, ?string $email = null, ?string $password = null): Authenticatable
     {
         $cacheKey = $email ?? 'null';
 
@@ -35,7 +39,7 @@ class UserFactory
         return $this->users[$userId][$cacheKey];
     }
 
-    protected function createUser(int $userId, ?string $email = null, ?string $password = null): Authenticatable
+    private function createUser(int $userId, ?string $email = null, ?string $password = null): Authenticatable
     {
         $userData = [
             'id' => $userId,
@@ -44,12 +48,11 @@ class UserFactory
         ];
 
         if ($password !== null) {
-            $hasher = Container::getInstance()->make(Hasher::class);
-            assert($hasher instanceof Hasher);
-            $userData['password'] = $hasher->make($password);
+            $userData['password'] = $this->hasher->make($password);
         }
 
         $modelClass = $this->getUserModelClass();
+        /** @phpstan-ignore staticMethod.notFound (HasFactory trait check enforced at runtime) */
         $factory = $modelClass::factory();
 
         $user = $factory->create($userData);
@@ -60,20 +63,19 @@ class UserFactory
 
     /**
      * @return class-string<Model&Authenticatable>
-     * @phpstan-ignore-next-line generalized in tests
      */
-    protected function getUserModelClass(): string
+    private function getUserModelClass(): string
     {
         $class = (string) config('testing-kit.user_model');
 
         if (!class_exists($class)) {
-            throw new \RuntimeException(
+            throw new RuntimeException(
                 sprintf('User model `%s` configured in testing-kit.user_model does not exist.', $class),
             );
         }
 
         if (!in_array(HasFactory::class, class_uses_recursive($class), true)) {
-            throw new \RuntimeException(
+            throw new RuntimeException(
                 sprintf('User model `%s` must use the HasFactory trait.', $class),
             );
         }

@@ -5,9 +5,11 @@ declare(strict_types=1);
 namespace DejwCake\TestingKit\Functional;
 
 use Composer\InstalledVersions;
+use DejwCake\TestingKit\Attributes\Context;
 use DejwCake\TestingKit\Factory\AdminUserFactory;
 use DejwCake\TestingKit\Factory\UserFactory;
 use DejwCake\TestingKit\Snapshot\HtmlDriver;
+use Illuminate\Auth\AuthManager;
 use Illuminate\Contracts\Auth\Authenticatable;
 use Illuminate\Foundation\Application;
 use Illuminate\Foundation\Console\Kernel;
@@ -17,6 +19,9 @@ use Illuminate\Testing\TestResponse;
 use Illuminate\Translation\Translator;
 use Illuminate\Validation\Factory;
 use Mockery;
+use ReflectionAttribute;
+use ReflectionClass;
+use RuntimeException;
 use Spatie\Snapshots\MatchesSnapshots;
 
 abstract class TestCase extends BaseTestCase
@@ -49,40 +54,12 @@ abstract class TestCase extends BaseTestCase
 
     public function assertDownload(TestResponse $response, ?string $filename = null): void
     {
-        $contentDisposition = explode(';', $response->headers->get('content-disposition'));
+        $contentDisposition = explode(';', (string) $response->headers->get('content-disposition'));
 
-        if (trim($contentDisposition[0]) !== 'attachment' && trim($contentDisposition[0]) !== 'inline') {
-            self::fail(
-                'Response does not offer a file download.' . PHP_EOL .
-                'Disposition [' . trim($contentDisposition[0]) . '] found in header, [attachment] expected.',
-            );
-        }
+        $this->assertContentDispositionType($contentDisposition[0]);
 
-        if (!is_null($filename)) {
-            if (isset($contentDisposition[1]) && trim(explode('=', $contentDisposition[1])[0]) !== 'filename') {
-                self::fail(
-                    'Unsupported Content-Disposition header provided.' . PHP_EOL .
-                    'Disposition [' . trim(
-                        explode('=', $contentDisposition[1])[0],
-                    ) . '] found in header, [filename] expected.',
-                );
-            }
-
-            $message = "Expected file [{$filename}] is not present in Content-Disposition header.";
-
-            if (!isset($contentDisposition[1])) {
-                self::fail($message);
-            } else {
-                self::assertSame(
-                    $filename,
-                    isset(explode('=', $contentDisposition[1])[1])
-                        ? trim(explode('=', $contentDisposition[1])[1], " \"'")
-                        : '',
-                    $message,
-                );
-            }
-        } else {
-            self::assertTrue(true);
+        if ($filename !== null) {
+            $this->assertContentDispositionFilename($contentDisposition, $filename);
         }
     }
 
@@ -94,7 +71,7 @@ abstract class TestCase extends BaseTestCase
         $this->adminUserFactory = $this->createAdminUserFactory();
 
         if (!$this->app->runningUnitTests()) {
-            throw new \RuntimeException('don\'t forget for ENV=testing !!');
+            throw new RuntimeException('don\'t forget for ENV=testing !!');
         }
 
         $this->mockTranslator();
@@ -103,6 +80,8 @@ abstract class TestCase extends BaseTestCase
         $this->app['request']->setLaravelSession($this->app['session']->driver('array'));
 
         $this->app['session']->driver()->put('_token', $this->dummyCsrfToken());
+
+        $this->resolveContextFromAttributes();
     }
 
     protected function getApplicationBootstrapPath(): string
@@ -112,7 +91,7 @@ abstract class TestCase extends BaseTestCase
         $bootstrapPath = realpath(rtrim($installPath, '/') . '/bootstrap/app.php');
 
         if ($bootstrapPath === false) {
-            throw new \RuntimeException(
+            throw new RuntimeException(
                 sprintf('Could not locate `bootstrap/app.php` from root package install path `%s`.', $installPath),
             );
         }
@@ -122,12 +101,18 @@ abstract class TestCase extends BaseTestCase
 
     protected function createUserFactory(): UserFactory
     {
-        return new UserFactory();
+        $factory = $this->app->make(UserFactory::class);
+        assert($factory instanceof UserFactory);
+
+        return $factory;
     }
 
     protected function createAdminUserFactory(): AdminUserFactory
     {
-        return new AdminUserFactory();
+        $factory = $this->app->make(AdminUserFactory::class);
+        assert($factory instanceof AdminUserFactory);
+
+        return $factory;
     }
 
     protected function authenticatedUserId(): int
@@ -152,6 +137,133 @@ abstract class TestCase extends BaseTestCase
         $this->user = $this->adminUserFactory->getAdminUser($userId ?: $this->authenticatedUserId());
 
         return $this->actingAs($this->user, $guard);
+    }
+
+    protected function resolveContextFromAttributes(): void
+    {
+        [$classAttributes, $methodAttributes] = $this->getTestCaseAttributes();
+
+        $context = new Context();
+        $context = $this->mergeContextFromAttributes($context, $classAttributes);
+        $context = $this->mergeContextFromAttributes($context, $methodAttributes);
+
+        $this->setUserFromContext($context);
+    }
+
+    /**
+     * @return array{0: ReflectionAttribute[], 1: ReflectionAttribute[]}
+     */
+    private function getTestCaseAttributes(): array
+    {
+        $reflectionClass = new ReflectionClass(static::class);
+        $classAttributes = $reflectionClass->getAttributes();
+        $reflectionMethod = $reflectionClass->getMethod($this->name());
+        $methodAttributes = $reflectionMethod->getAttributes();
+
+        return [$classAttributes, $methodAttributes];
+    }
+
+    /**
+     * @param array<int, ReflectionAttribute> $attributes
+     */
+    private function mergeContextFromAttributes(Context $context, array $attributes): Context
+    {
+        foreach ($attributes as $attribute) {
+            if ($attribute->getName() !== Context::class) {
+                continue;
+            }
+
+            $newContext = $attribute->newInstance();
+            assert($newContext instanceof Context);
+            if ($newContext->user !== null) {
+                $context = new Context(user: $newContext->user);
+            }
+        }
+
+        return $context;
+    }
+
+    private function setUserFromContext(Context $context): void
+    {
+        if ($context->user === null) {
+            return;
+        }
+
+        match ($context->user) {
+            'customer' => $this->applyCustomerContext(),
+            'admin-user' => $this->applyAdminUserContext(),
+            'anonymous' => $this->applyAnonymousContext(),
+            default => $this->failUnsupportedUser($context->user),
+        };
+    }
+
+    private function applyCustomerContext(): void
+    {
+        $this->actingAsCustomer();
+    }
+
+    private function applyAdminUserContext(): void
+    {
+        $this->actingAsAdminUser();
+    }
+
+    private function applyAnonymousContext(): void
+    {
+        $auth = $this->app->make(AuthManager::class);
+        assert($auth instanceof AuthManager);
+
+        if ($auth->guard()->check()) {
+            $auth->guard()->logoutCurrentDevice();
+        }
+    }
+
+    private function failUnsupportedUser(string $user): never
+    {
+        $this->fail(
+            sprintf(
+                'Unsupported user. [%s] Allowed are: anonymous|customer|admin-user',
+                $user,
+            ),
+        );
+    }
+
+    private function assertContentDispositionType(string $type): void
+    {
+        $type = trim($type);
+        if ($type !== 'attachment' && $type !== 'inline') {
+            self::fail(
+                'Response does not offer a file download.' . PHP_EOL .
+                sprintf('Disposition [%s] found in header, [attachment] expected.', $type),
+            );
+        }
+    }
+
+    /**
+     * @param array<int, string> $contentDisposition
+     */
+    private function assertContentDispositionFilename(array $contentDisposition, string $filename): void
+    {
+        if (!isset($contentDisposition[1])) {
+            self::fail(sprintf('Expected file [%s] is not present in Content-Disposition header.', $filename));
+        }
+
+        $parts = explode('=', $contentDisposition[1]);
+        $key = trim($parts[0]);
+
+        if ($key !== 'filename') {
+            self::fail(
+                'Unsupported Content-Disposition header provided.' . PHP_EOL .
+                sprintf('Disposition [%s] found in header, [filename] expected.', $key),
+            );
+        }
+
+        $actualFilename = isset($parts[1]) ? trim($parts[1], " \"'") : '';
+
+        self::assertSame(
+            $filename,
+            $actualFilename,
+            sprintf('Expected file [%s] is not present in Content-Disposition header.', $filename),
+        );
     }
 
     private function mockTranslator(): void

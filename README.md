@@ -2,10 +2,10 @@
 
 Testing Kit is a Laravel package that provides reusable testing infrastructure for Craftable-based projects. It supplies:
 
-- Base `TestCase` (database refresh, translator mocking, dummy CSRF, snapshot helpers, download assertions)
+- Base `TestCase` (database refresh, translator mocking, dummy CSRF, snapshot helpers, download assertions, declarative context resolution from PHP attributes)
 - `HttpTestCase`, `ApiTestCase`, `WebTestCase` for HTTP-driven integration tests
-- `TestCaseContext` trait + `Context` PHP attribute for declarative `customer | admin-user | anonymous` setup per test method or class
-- `UserFactory` and `AdminUserFactory` with model class pluggable via config
+- `Context` PHP attribute for declarative `customer | admin-user | anonymous` setup per test method or class
+- `UserFactory` and `AdminUserFactory` with model class pluggable via config (constructor-injected `Hasher`)
 - HTML snapshot driver and `SnapshotAsserts` trait for view snapshot testing
 - `OpenApiValidationTrait` and helper `Util` for asserting responses against an OpenAPI spec
 

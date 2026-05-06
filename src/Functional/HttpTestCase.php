@@ -4,19 +4,15 @@ declare(strict_types=1);
 
 namespace DejwCake\TestingKit\Functional;
 
-use Illuminate\Foundation\Http\Middleware\VerifyCsrfToken;
+use Illuminate\Foundation\Http\Middleware\PreventRequestForgery;
 
 abstract class HttpTestCase extends TestCase
 {
-    use TestCaseContext;
-
     protected function setUp(): void
     {
         parent::setUp();
 
         // disable csrf protection
-        $this->withoutMiddleware(VerifyCsrfToken::class);
-
-        $this->resolveContextFromAttributes();
+        $this->withoutMiddleware(PreventRequestForgery::class);
     }
 }

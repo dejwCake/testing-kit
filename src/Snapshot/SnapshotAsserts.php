@@ -6,6 +6,10 @@ namespace DejwCake\TestingKit\Snapshot;
 
 use DOMDocument;
 
+use const LIBXML_NOERROR;
+use const LIBXML_NONET;
+use const LIBXML_NOWARNING;
+
 trait SnapshotAsserts
 {
     public function removeWhitespaceInEmptyRows(string $mainContent): string
@@ -24,7 +28,7 @@ trait SnapshotAsserts
         $htmlResponse = preg_replace('/<!--(.|\s)*?-->/', '', $htmlResponse);
 
         //find main content block
-        $dom->loadHTML($htmlResponse, \LIBXML_NONET | \LIBXML_NOWARNING | \LIBXML_NOERROR);
+        $dom->loadHTML($htmlResponse, LIBXML_NONET | LIBXML_NOWARNING | LIBXML_NOERROR);
 
         $baseElement = $dom->createElement('base');
         $baseElement->setAttribute('href', 'http://home-accounting.dev');
