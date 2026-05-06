@@ -1,0 +1,54 @@
+{
+    "name": "dejwcake/testing-kit",
+    "description": "Testing utilities and base test cases for Craftable/Laravel projects",
+    "license": "MIT",
+    "type": "library",
+    "keywords": [
+        "testing",
+        "phpunit",
+        "laravel",
+        "cms",
+        "craftable"
+    ],
+    "authors": [
+        {
+            "name": "David Běhal",
+            "email": "david.behal@dejw.sk",
+            "homepage": "https://www.dejw.sk",
+            "role": "Developer"
+        }
+    ],
+    "require": {
+        "php": "^8.5",
+        "composer-runtime-api": "^2.0",
+        "illuminate/support": "^12.0",
+        "league/openapi-psr7-validator": "^0.22",
+        "mockery/mockery": "^1.6",
+        "nyholm/psr7": "^1.8",
+        "spatie/phpunit-snapshot-assertions": "^5.1",
+        "symfony/psr-http-message-bridge": "^7.2",
+        "zircote/swagger-php": "^4.0 || ^5.0"
+    },
+    "autoload": {
+        "psr-4": {
+            "DejwCake\\TestingKit\\": "src/"
+        }
+    },
+    "autoload-dev": {
+        "psr-4": {
+            "DejwCake\\TestingKit\\Tests\\": "tests/"
+        }
+    },
+    "extra": {
+        "branch-alias": {
+            "dev-main": "1.0-dev"
+        },
+        "laravel": {
+            "providers": [
+                "DejwCake\\TestingKit\\TestingKitServiceProvider"
+            ]
+        }
+    },
+    "minimum-stability": "dev",
+    "prefer-stable": true
+}
