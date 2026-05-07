@@ -46,6 +46,16 @@ final class AdminUserFactory
     {
         $userData = [
             'id' => $userId,
+            'first_name' => 'Admin',
+            'last_name' => 'User',
+            'email' => 'admin@example.com',
+            'activated' => true,
+            'forbidden' => false,
+            'language' => 'en',
+            'deleted_at' => null,
+            'created_at' => '2026-01-01 00:00:00',
+            'updated_at' => '2026-01-01 00:00:00',
+            'last_login_at' => '2026-01-01 00:00:00',
         ];
 
         if ($email !== null) {
@@ -62,6 +72,8 @@ final class AdminUserFactory
 
         $adminUser = $factory->create($userData);
         assert($adminUser instanceof Authenticatable);
+
+        $adminUser->assignRole((string) config('testing-kit.default_admin_role', 'Administrator'));
 
         return $adminUser;
     }

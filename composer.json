@@ -20,7 +20,8 @@
     ],
     "require": {
         "php": "^8.5",
-        "composer-runtime-api": "^2.0",
+        "ext-dom": "*",
+        "ext-libxml": "*",
         "illuminate/support": "^13.0",
         "league/openapi-psr7-validator": "^0.22",
         "mockery/mockery": "^1.6",

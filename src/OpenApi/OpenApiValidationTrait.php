@@ -59,7 +59,9 @@ trait OpenApiValidationTrait
             self::fail(sprintf('Operation path for route `%s` not found.', $routeName));
         }
 
-        $this->assertResponseValidOpenApi($method, $paths[0], $response, $data, $message);
+        $path = str_starts_with($paths[0], '/') ? $paths[0] : '/' . $paths[0];
+
+        $this->assertResponseValidOpenApi($method, $path, $response, $data, $message);
     }
 
     /**
