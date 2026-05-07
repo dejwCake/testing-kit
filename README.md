@@ -2,10 +2,10 @@
 
 Testing Kit is a Laravel package that provides reusable testing infrastructure for Craftable-based projects. It supplies:
 
-- Base `TestCase` (database refresh, translator mocking, dummy CSRF, snapshot helpers, download assertions, declarative context resolution from PHP attributes)
-- `HttpTestCase`, `ApiTestCase`, `WebTestCase` for HTTP-driven integration tests
+- A `TestCase` base (database refresh, translator mocking, dummy CSRF, snapshot helpers, download assertions, declarative actor resolution from PHP attributes)
+- `HttpTestCase`, `WebTestCase`, `ApiTestCase` for HTTP / web / API integration tests
 - `Context` PHP attribute for declarative `customer | admin-user | anonymous` setup per test method or class
-- `UserFactory` and `AdminUserFactory` with model class pluggable via config (constructor-injected `Hasher`)
+- `UserFactory` and `AdminUserFactory` with the underlying model class pluggable via config (constructor-injected `Hasher`); `AdminUserFactory` also assigns the configured admin role
 - HTML snapshot driver and `SnapshotAsserts` trait for view snapshot testing
 - `OpenApiValidationTrait` and helper `Util` for asserting responses against an OpenAPI spec
 
@@ -16,9 +16,6 @@ This package is part of [Craftable](https://github.com/dejwCake/craftable) (`dej
 Add the path repository (or a Packagist version) and require as a dev dependency in your application:
 
 ```json
-"repositories": [
-    { "type": "path", "url": "packages/*", "options": { "symlink": true } }
-],
 "require-dev": {
     "dejwcake/testing-kit": "*"
 }
@@ -26,15 +23,33 @@ Add the path repository (or a Packagist version) and require as a dev dependency
 
 The `TestingKitServiceProvider` is auto-discovered by Laravel.
 
-Publish the config (optional) to override the user models, default emails or the OpenAPI spec path:
+Publish the config (optional) to override the user models, default emails, role name, or the OpenAPI spec path:
 
 ```shell
 php artisan vendor:publish --tag=testing-kit-config
 ```
 
+### Config
+
+`config/testing-kit.php` (after publishing):
+
+| Key | Default | Purpose |
+|---|---|---|
+| `user_model` | `App\Models\User` | Model class used by `UserFactory` |
+| `admin_user_model` | `Brackets\AdminAuth\Models\AdminUser` | Model class used by `AdminUserFactory` |
+| `authenticated_user_id` | `123` | Default id used by `actingAsCustomer()` / `actingAsAdminUser()` when none is passed |
+| `dummy_csrf_token` | `'csrf-token-mock'` | Token put into the test session |
+| `default_locale` | `'en'` | Locale set in `createApplication()` |
+| `default_user_email` | `'test@example.com'` | Email pinned on customer fixtures |
+| `default_admin_user_email` | `'admin@example.com'` | Email pinned on admin user fixtures |
+| `default_admin_role` | `'Administrator'` | Role assigned to admin user fixtures via Spatie `HasRoles` |
+| `openapi.spec_path` | `storage_path('api-docs/openapi.json')` | Spec file used by `ApiTestCase` |
+| `openapi.regenerate_command` | `'l5-swagger:generate'` | Artisan command to regenerate the spec |
+| `openapi.regenerate_on_init` | `true` | Whether `ApiTestCase::setUp` regenerates the spec |
+
 ## Usage
 
-Extend the package base classes from your project's test cases:
+### Web test (HTML snapshot + download assertion)
 
 ```php
 use DejwCake\TestingKit\Functional\WebTestCase;
@@ -53,7 +68,28 @@ final class InstructionsControllerTest extends WebTestCase
 }
 ```
 
-`createApplication()` resolves your project's `bootstrap/app.php` automatically via the Composer runtime API. Override `getApplicationBootstrapPath()` in your local TestCase if needed.
+### API test (OpenAPI validation)
+
+```php
+use DejwCake\TestingKit\Functional\ApiTestCase;
+use DejwCake\TestingKit\Attributes\Context;
+
+final class PostsControllerTest extends ApiTestCase
+{
+    #[Context(user: 'customer')]
+    public function testCustomerCanListPosts(): void
+    {
+        $response = $this->getJson(route('api/posts/index'));
+
+        $response->assertOk();
+        $this->assertValidOpenApiResponseForRoute('GET', 'api/posts/index', $response);
+    }
+}
+```
+
+### Acting as an admin
+
+`#[Context(user: 'admin-user')]` resolves the guard from `admin-auth.defaults.guard` (Spatie `HasRoles` then sees the admin guard, so the role lookup matches the admin-auth installation migration). The fixture admin user has `id` = `testing-kit.authenticated_user_id`.
 
 ## Issues
 
@@ -117,4 +153,3 @@ Mess detector (phpmd):
 ```shell
 docker compose run -it --rm php-qa phpmd ./config,./src,./tests ansi phpmd.xml --suffixes php --baseline-file phpmd.baseline.xml
 ```
-

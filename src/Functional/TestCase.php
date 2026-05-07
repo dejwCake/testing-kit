@@ -32,15 +32,6 @@ abstract class TestCase extends BaseTestCase
     protected Authenticatable $user;
     protected Config $config;
 
-    public function createApplication(): Application
-    {
-        $app = parent::createApplication();
-
-        $app->setLocale((string) $app['config']->get('testing-kit.default_locale', 'en'));
-
-        return $app;
-    }
-
     public function assertMatchesHtmlSnapshot(string $actual, ?string $id = null): void
     {
         $this->assertMatchesSnapshot($actual, new HtmlDriver(), $id);
@@ -57,6 +48,8 @@ abstract class TestCase extends BaseTestCase
         if (!$this->app->runningUnitTests()) {
             throw new RuntimeException('don\'t forget for ENV=testing !!');
         }
+
+        $this->app->setLocale((string) $this->config->get('testing-kit.default_locale', 'en'));
 
         $this->mockTranslator();
 
