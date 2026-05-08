@@ -20,10 +20,9 @@ abstract class TestCase extends FunctionalTestCase
 
     /**
      * @phpcsSuppress SlevomatCodingStandard.Functions.UnusedParameter.UnusedParameter
-     * @param Application $app
      * @return array<int, class-string>
      */
-    protected function getPackageProviders($app): array
+    protected function getPackageProviders(Application $app): array
     {
         return [
             TestingKitServiceProvider::class,
@@ -31,10 +30,7 @@ abstract class TestCase extends FunctionalTestCase
         ];
     }
 
-    /**
-     * @param Application $app
-     */
-    protected function defineEnvironment($app): void
+    protected function defineEnvironment(Application $app): void
     {
         $app['config']->set('app.key', 'base64:fhmTMYCgGleEXIJlSQqEVAisVbsHiwxYwG7Vzs6QdlA=');
         $app['config']->set('app.locale', 'en');
@@ -62,6 +58,16 @@ abstract class TestCase extends FunctionalTestCase
         $app['config']->set('testing-kit.openapi.regenerate_on_init', false);
     }
 
+    /**
+     * Skip the package-discovered migrations (Spatie's create_permission_tables in
+     * particular) — the test schema is created entirely by setUpSchema().
+     */
+    #[Override]
+    protected function migrateDatabases(): void
+    {
+        // intentional no-op
+    }
+
     #[Override]
     protected function afterRefreshingDatabase(): void
     {
@@ -72,6 +78,19 @@ abstract class TestCase extends FunctionalTestCase
     private function setUpSchema(): void
     {
         $schema = $this->app['db']->connection()->getSchemaBuilder();
+
+        $tables = [
+            'role_has_permissions',
+            'model_has_roles',
+            'model_has_permissions',
+            'roles',
+            'permissions',
+            'admin_users',
+            'users',
+        ];
+        foreach ($tables as $table) {
+            $schema->dropIfExists($table);
+        }
 
         $schema->create('users', static function (Blueprint $table): void {
             $table->bigIncrements('id');

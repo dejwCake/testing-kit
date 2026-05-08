@@ -8,7 +8,6 @@ use DejwCake\TestingKit\Tests\Database\Factories\TestUserModelFactory;
 use Illuminate\Database\Eloquent\Factories\Factory;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Foundation\Auth\User as Authenticatable;
-use Override;
 
 final class TestUserModel extends Authenticatable
 {
@@ -26,9 +25,12 @@ final class TestUserModel extends Authenticatable
      */
     protected $table = 'users';
 
+    /**
+     * @var bool
+     * @phpcsSuppress SlevomatCodingStandard.TypeHints.PropertyTypeHint.MissingNativeTypeHint
+     */
     public $timestamps = false;
 
-    #[Override]
     protected static function newFactory(): Factory
     {
         return TestUserModelFactory::new();

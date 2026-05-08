@@ -9,7 +9,6 @@ use Illuminate\Database\Eloquent\Factories\Factory;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\SoftDeletes;
 use Illuminate\Foundation\Auth\User as Authenticatable;
-use Override;
 use Spatie\Permission\Traits\HasRoles;
 
 final class TestAdminUserModel extends Authenticatable
@@ -40,7 +39,6 @@ final class TestAdminUserModel extends Authenticatable
      */
     protected $table = 'admin_users';
 
-    #[Override]
     protected static function newFactory(): Factory
     {
         return TestAdminUserModelFactory::new();

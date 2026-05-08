@@ -10,6 +10,9 @@ use const LIBXML_NOERROR;
 use const LIBXML_NONET;
 use const LIBXML_NOWARNING;
 
+/**
+ * @phpstan-require-extends \DejwCake\TestingKit\Functional\TestCase
+ */
 trait SnapshotAsserts
 {
     public function removeWhitespaceInEmptyRows(string $mainContent): string

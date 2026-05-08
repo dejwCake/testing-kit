@@ -17,3 +17,99 @@ parameters:
 			identifier: method.notFound
 			count: 1
 			path: src/Factory/AdminUserFactory.php
+
+		-
+			message: '#^Access to an undefined property DejwCake\\TestingKit\\Tests\\Models\\TestAdminUserModel\:\:\$activated\.$#'
+			identifier: property.notFound
+			count: 1
+			path: tests/Feature/Factory/AdminUserFactory/GetAdminUserTest.php
+
+		-
+			message: '#^Access to an undefined property DejwCake\\TestingKit\\Tests\\Models\\TestAdminUserModel\:\:\$email\.$#'
+			identifier: property.notFound
+			count: 1
+			path: tests/Feature/Factory/AdminUserFactory/GetAdminUserTest.php
+
+		-
+			message: '#^Access to an undefined property DejwCake\\TestingKit\\Tests\\Models\\TestAdminUserModel\:\:\$first_name\.$#'
+			identifier: property.notFound
+			count: 1
+			path: tests/Feature/Factory/AdminUserFactory/GetAdminUserTest.php
+
+		-
+			message: '#^Access to an undefined property DejwCake\\TestingKit\\Tests\\Models\\TestAdminUserModel\:\:\$forbidden\.$#'
+			identifier: property.notFound
+			count: 1
+			path: tests/Feature/Factory/AdminUserFactory/GetAdminUserTest.php
+
+		-
+			message: '#^Access to an undefined property DejwCake\\TestingKit\\Tests\\Models\\TestAdminUserModel\:\:\$language\.$#'
+			identifier: property.notFound
+			count: 1
+			path: tests/Feature/Factory/AdminUserFactory/GetAdminUserTest.php
+
+		-
+			message: '#^Access to an undefined property DejwCake\\TestingKit\\Tests\\Models\\TestAdminUserModel\:\:\$last_name\.$#'
+			identifier: property.notFound
+			count: 1
+			path: tests/Feature/Factory/AdminUserFactory/GetAdminUserTest.php
+
+		-
+			message: '#^Call to an undefined method Illuminate\\Contracts\\Auth\\Authenticatable\:\:hasRole\(\)\.$#'
+			identifier: method.notFound
+			count: 1
+			path: tests/Feature/Factory/AdminUserFactory/GetAdminUserTest.php
+
+		-
+			message: '#^Call to an undefined method Illuminate\\Contracts\\Auth\\Authenticatable\:\:hasRole\(\)\.$#'
+			identifier: method.notFound
+			count: 2
+			path: tests/Feature/Factory/AdminUserFactory/RoleNameFromConfigTest.php
+
+		-
+			message: '#^Access to an undefined property DejwCake\\TestingKit\\Tests\\Models\\TestUserModel\:\:\$email\.$#'
+			identifier: property.notFound
+			count: 1
+			path: tests/Feature/Factory/UserFactory/GetCustomerTest.php
+
+		-
+			message: '#^Call to static method PHPUnit\\Framework\\Assert\:\:assertTrue\(\) with true will always evaluate to true\.$#'
+			identifier: staticMethod.alreadyNarrowedType
+			count: 3
+			path: tests/Feature/Functional/Concerns/AssertsDownload/AssertDownloadTest.php
+
+		-
+			message: '#^Missing call to parent\:\:setUp\(\) method\.$#'
+			identifier: phpunit.callParent
+			count: 1
+			path: tests/Feature/Functional/Concerns/ResolvesAttributeContext/FailUnsupportedUserTest.php
+
+		-
+			message: '#^Call to static method PHPUnit\\Framework\\Assert\:\:assertInstanceOf\(\) with ''Illuminate\\\\Contracts\\\\Config\\\\Repository'' and Illuminate\\Contracts\\Config\\Repository will always evaluate to true\.$#'
+			identifier: staticMethod.alreadyNarrowedType
+			count: 1
+			path: tests/Feature/Functional/TestCase/SetUpTest.php
+
+		-
+			message: '#^Call to an undefined method class@anonymous/tests/Feature/Snapshot/SnapshotAsserts/RemoveWhitespaceInEmptyRowsTest\.php\:14\:\:assertMatchesHtmlSnapshot\(\)\.$#'
+			identifier: method.notFound
+			count: 1
+			path: tests/Feature/Snapshot/SnapshotAsserts/RemoveWhitespaceInEmptyRowsTest.php
+
+		-
+			message: '#^Call to an undefined method class@anonymous/tests/Feature/Snapshot/SnapshotAsserts/RemoveWhitespaceInEmptyRowsTest\.php\:26\:\:assertMatchesHtmlSnapshot\(\)\.$#'
+			identifier: method.notFound
+			count: 1
+			path: tests/Feature/Snapshot/SnapshotAsserts/RemoveWhitespaceInEmptyRowsTest.php
+
+		-
+			message: '#^PHPDoc type array\<int, string\> of property DejwCake\\TestingKit\\Tests\\Models\\TestAdminUserModel\:\:\$fillable is not covariant with PHPDoc type list\<string\> of overridden property Illuminate\\Database\\Eloquent\\Model\:\:\$fillable\.$#'
+			identifier: property.phpDocType
+			count: 1
+			path: tests/Models/TestAdminUserModel.php
+
+		-
+			message: '#^PHPDoc type array\<int, string\> of property DejwCake\\TestingKit\\Tests\\Models\\TestUserModel\:\:\$fillable is not covariant with PHPDoc type list\<string\> of overridden property Illuminate\\Database\\Eloquent\\Model\:\:\$fillable\.$#'
+			identifier: property.phpDocType
+			count: 1
+			path: tests/Models/TestUserModel.php

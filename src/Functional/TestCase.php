@@ -12,7 +12,6 @@ use DejwCake\TestingKit\Functional\Concerns\ResolvesAttributeContext;
 use DejwCake\TestingKit\Snapshot\HtmlDriver;
 use Illuminate\Contracts\Auth\Authenticatable;
 use Illuminate\Contracts\Config\Repository as Config;
-use Illuminate\Foundation\Application;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Foundation\Testing\TestCase as BaseTestCase;
 use RuntimeException;

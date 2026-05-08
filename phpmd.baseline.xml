@@ -2,4 +2,5 @@
 <phpmd-baseline>
   <violation rule="PHPMD\Rule\Design\WeightedMethodCount" file="src/OpenApi/Util.php"/>
   <violation rule="PHPMD\Rule\Design\CouplingBetweenObjects" file="src/OpenApi/Util.php"/>
+  <violation rule="PHPMD\Rule\Design\NumberOfChildren" file="tests/TestCase.php"/>
 </phpmd-baseline>

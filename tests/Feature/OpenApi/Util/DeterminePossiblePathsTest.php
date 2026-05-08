@@ -31,10 +31,12 @@ final class DeterminePossiblePathsTest extends TestCase
             'posts/{post}/comments/{comment?}',
             ['posts/{post}/comments', 'posts/{post}/comments/{comment}'],
         ];
+
         yield 'two trailing optionals' => [
             'a/{x?}/{y?}',
             ['a', 'a/{x}', 'a/{x}/{y}'],
         ];
+
         yield 'optional then required then optional treats middle as required prefix' => [
             'a/{x?}/b/{y?}',
             ['a/{x}/b', 'a/{x}/b/{y}'],

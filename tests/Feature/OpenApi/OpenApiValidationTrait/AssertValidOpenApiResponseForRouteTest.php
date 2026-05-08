@@ -54,9 +54,6 @@ final class AssertValidOpenApiResponseForRouteTest extends TestCase
         $this->assertValidOpenApiResponseForRoute('GET', 'api/unknown/index', $response);
     }
 
-    /**
-     * @param mixed $payload
-     */
     private function registerItemsRoute(mixed $payload): void
     {
         Route::get('api/items', static fn () => is_array($payload) && array_is_list($payload)
