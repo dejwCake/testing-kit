@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace DejwCake\TestingKit\Snapshot;
 
 use DOMDocument;
+use Illuminate\Contracts\Config\Repository as Config;
 
 use const LIBXML_NOERROR;
 use const LIBXML_NONET;
@@ -25,22 +26,15 @@ trait SnapshotAsserts
 
     protected function assertMatchesViewSnapshot(string $htmlResponse): void
     {
-        $dom = new DOMDocument('1.0', 'utf-8');
-
         //remove html comments
         $htmlResponse = preg_replace('/<!--(.|\s)*?-->/', '', $htmlResponse);
 
-        //find main content block
-        $dom->loadHTML($htmlResponse, LIBXML_NONET | LIBXML_NOWARNING | LIBXML_NOERROR);
+        $appUrl = $this->app->make(Config::class)->get('app.url');
+        assert(is_string($appUrl));
 
-        $baseElement = $dom->createElement('base');
-        $baseElement->setAttribute('href', 'http://home-accounting.dev');
-        $dom->getElementsByTagName('head')->item(0)->appendChild($baseElement);
-
-        $content = $dom->getElementsByTagName('html')->item(0);
-
-        //convert main content block back to string
-        $mainContent = $dom->saveHTML($content);
+        $mainContent = $this->isFullHtmlDocument($htmlResponse)
+            ? $this->normaliseFullDocument($htmlResponse, $appUrl)
+            : $htmlResponse;
 
         //replace random uuids
         $mainContent = $this->change(
@@ -55,6 +49,12 @@ trait SnapshotAsserts
         $mainContent = $this->change($mainContent, '/"id":"([0-9a-zA-Z]*)"/', '"id":"id%d"');
         $mainContent = $this->change($mainContent, '/"checksum":"([0-9a-zA-Z]*)"/', '"checksum":"checksum%d"');
         $mainContent = $this->change($mainContent, '/"htmlHash":"([0-9a-zA-Z]*)"/', '"htmlHash":"htmlHash%d"');
+
+        // replace database auto-increment ids rendered as "#N" in text content (e.g. "Inquiry ID: #6")
+        $mainContent = preg_replace('/(>\s*)#\d+(\s*[<])/', '$1#db-id-replaced-in-snapshot$2', $mainContent);
+
+        // replace copyright year (rendered via PHP date('Y') which Carbon::setTestNow does not override)
+        $mainContent = preg_replace('/(&copy;\s+)\d{4}/', '$1YEAR-replaced-in-snapshot', $mainContent);
         $mainContent = $this->remove($mainContent, '#<script(.*)\@vite(.*)></script>#');
         $mainContent = $this->remove($mainContent, '#<link(.*)%5B::%5D(.*)>#');
         $mainContent = $this->remove($mainContent, '#<script(.*)/build/(.*)></script>#');
@@ -69,6 +69,28 @@ trait SnapshotAsserts
         );
 
         $this->assertMatchesHtmlSnapshot($mainContent);
+    }
+
+    private function isFullHtmlDocument(string $html): bool
+    {
+        return stripos($html, '<html') !== false && stripos($html, '<head') !== false;
+    }
+
+    private function normaliseFullDocument(string $html, string $baseHref): string
+    {
+        $dom = new DOMDocument('1.0', 'utf-8');
+        $dom->loadHTML($html, LIBXML_NONET | LIBXML_NOWARNING | LIBXML_NOERROR);
+
+        $head = $dom->getElementsByTagName('head')->item(0);
+        if ($head !== null) {
+            $baseElement = $dom->createElement('base');
+            $baseElement->setAttribute('href', $baseHref);
+            $head->appendChild($baseElement);
+        }
+
+        $content = $dom->getElementsByTagName('html')->item(0);
+
+        return $dom->saveHTML($content);
     }
 
     private function change(string $mainContent, string $pattern, string $format): string
