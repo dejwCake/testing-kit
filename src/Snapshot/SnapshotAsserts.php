@@ -32,8 +32,20 @@ trait SnapshotAsserts
         $appUrl = $this->app->make(Config::class)->get('app.url');
         assert(is_string($appUrl));
 
+        // normalise app URL so snapshots don't depend on the env's APP_URL.
+        // Also handle the case where APP_URL includes an explicit port (http://localhost:80)
+        // but route() strips the default port from the rendered host (http://localhost/...).
+        $parsed = parse_url($appUrl);
+        $scheme = $parsed['scheme'] ?? 'http';
+        $host = $parsed['host'] ?? 'localhost';
+        $port = $parsed['port'] ?? null;
+        $variants = $port !== null
+            ? ["$scheme://$host:$port", "$scheme://$host"]
+            : ["$scheme://$host"];
+        $htmlResponse = str_replace($variants, 'http://app-url-replaced-in-snapshot', $htmlResponse);
+
         $mainContent = $this->isFullHtmlDocument($htmlResponse)
-            ? $this->normaliseFullDocument($htmlResponse, $appUrl)
+            ? $this->normaliseFullDocument($htmlResponse, 'http://app-url-replaced-in-snapshot')
             : $htmlResponse;
 
         //replace random uuids
