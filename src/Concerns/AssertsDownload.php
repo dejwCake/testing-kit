@@ -2,9 +2,9 @@
 
 declare(strict_types=1);
 
-namespace DejwCake\TestingKit\Functional\Concerns;
+namespace DejwCake\TestingKit\Concerns;
 
-use DejwCake\TestingKit\Functional\TestCase;
+use Illuminate\Foundation\Testing\TestCase;
 use Illuminate\Testing\TestResponse;
 
 /**

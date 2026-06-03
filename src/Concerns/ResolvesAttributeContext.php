@@ -2,7 +2,7 @@
 
 declare(strict_types=1);
 
-namespace DejwCake\TestingKit\Functional\Concerns;
+namespace DejwCake\TestingKit\Concerns;
 
 use DejwCake\TestingKit\Attributes\Context;
 use DejwCake\TestingKit\Functional\TestCase;

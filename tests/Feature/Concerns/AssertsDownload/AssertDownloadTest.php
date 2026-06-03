@@ -2,7 +2,7 @@
 
 declare(strict_types=1);
 
-namespace DejwCake\TestingKit\Tests\Feature\Functional\Concerns\AssertsDownload;
+namespace DejwCake\TestingKit\Tests\Feature\Concerns\AssertsDownload;
 
 use DejwCake\TestingKit\Tests\TestCase;
 use Illuminate\Http\Response;

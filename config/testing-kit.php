@@ -12,6 +12,7 @@ return [
     'authenticated_user_id' => 123,
     'dummy_csrf_token' => 'csrf-token-mock',
     'default_locale' => 'en',
+    'frozen_now' => '2026-01-15 10:30:00',
 
     'default_user_email' => 'test@example.com',
     'default_admin_user_email' => 'admin@example.com',

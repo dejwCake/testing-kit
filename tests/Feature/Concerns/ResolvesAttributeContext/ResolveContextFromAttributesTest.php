@@ -2,7 +2,7 @@
 
 declare(strict_types=1);
 
-namespace DejwCake\TestingKit\Tests\Feature\Functional\Concerns\ResolvesAttributeContext;
+namespace DejwCake\TestingKit\Tests\Feature\Concerns\ResolvesAttributeContext;
 
 use DejwCake\TestingKit\Attributes\Context;
 use DejwCake\TestingKit\Tests\Models\TestAdminUserModel;

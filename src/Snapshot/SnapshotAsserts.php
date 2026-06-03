@@ -12,7 +12,8 @@ use const LIBXML_NONET;
 use const LIBXML_NOWARNING;
 
 /**
- * @phpstan-require-extends \DejwCake\TestingKit\Functional\TestCase
+ * @phpstan-require-extends \Illuminate\Foundation\Testing\TestCase
+ * @method void assertMatchesHtmlSnapshot(string $actual, ?string $id = null)
  */
 trait SnapshotAsserts
 {

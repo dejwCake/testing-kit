@@ -4,11 +4,11 @@ declare(strict_types=1);
 
 namespace DejwCake\TestingKit\Functional;
 
+use DejwCake\TestingKit\Concerns\AssertsDownload;
+use DejwCake\TestingKit\Concerns\MocksTranslator;
+use DejwCake\TestingKit\Concerns\ResolvesAttributeContext;
 use DejwCake\TestingKit\Factory\AdminUserFactory;
 use DejwCake\TestingKit\Factory\UserFactory;
-use DejwCake\TestingKit\Functional\Concerns\AssertsDownload;
-use DejwCake\TestingKit\Functional\Concerns\MocksTranslator;
-use DejwCake\TestingKit\Functional\Concerns\ResolvesAttributeContext;
 use DejwCake\TestingKit\Snapshot\HtmlDriver;
 use Illuminate\Contracts\Auth\Authenticatable;
 use Illuminate\Contracts\Config\Repository as Config;

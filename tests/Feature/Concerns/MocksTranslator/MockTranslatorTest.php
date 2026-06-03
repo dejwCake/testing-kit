@@ -2,7 +2,7 @@
 
 declare(strict_types=1);
 
-namespace DejwCake\TestingKit\Tests\Feature\Functional\Concerns\MocksTranslator;
+namespace DejwCake\TestingKit\Tests\Feature\Concerns\MocksTranslator;
 
 use DejwCake\TestingKit\Tests\TestCase;
 use Illuminate\Contracts\Translation\Translator;

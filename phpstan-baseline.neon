@@ -19,6 +19,18 @@ parameters:
 			path: src/Factory/AdminUserFactory.php
 
 		-
+			message: '#^Call to static method PHPUnit\\Framework\\Assert\:\:assertTrue\(\) with true will always evaluate to true\.$#'
+			identifier: staticMethod.alreadyNarrowedType
+			count: 3
+			path: tests/Feature/Concerns/AssertsDownload/AssertDownloadTest.php
+
+		-
+			message: '#^Missing call to parent\:\:setUp\(\) method\.$#'
+			identifier: phpunit.callParent
+			count: 1
+			path: tests/Feature/Concerns/ResolvesAttributeContext/FailUnsupportedUserTest.php
+
+		-
 			message: '#^Access to an undefined property DejwCake\\TestingKit\\Tests\\Models\\TestAdminUserModel\:\:\$activated\.$#'
 			identifier: property.notFound
 			count: 1
@@ -73,34 +85,10 @@ parameters:
 			path: tests/Feature/Factory/UserFactory/GetCustomerTest.php
 
 		-
-			message: '#^Call to static method PHPUnit\\Framework\\Assert\:\:assertTrue\(\) with true will always evaluate to true\.$#'
-			identifier: staticMethod.alreadyNarrowedType
-			count: 3
-			path: tests/Feature/Functional/Concerns/AssertsDownload/AssertDownloadTest.php
-
-		-
-			message: '#^Missing call to parent\:\:setUp\(\) method\.$#'
-			identifier: phpunit.callParent
-			count: 1
-			path: tests/Feature/Functional/Concerns/ResolvesAttributeContext/FailUnsupportedUserTest.php
-
-		-
 			message: '#^Call to static method PHPUnit\\Framework\\Assert\:\:assertInstanceOf\(\) with ''Illuminate\\\\Contracts\\\\Config\\\\Repository'' and Illuminate\\Contracts\\Config\\Repository will always evaluate to true\.$#'
 			identifier: staticMethod.alreadyNarrowedType
 			count: 1
 			path: tests/Feature/Functional/TestCase/SetUpTest.php
-
-		-
-			message: '#^Call to an undefined method class@anonymous/tests/Feature/Snapshot/SnapshotAsserts/RemoveWhitespaceInEmptyRowsTest\.php\:14\:\:assertMatchesHtmlSnapshot\(\)\.$#'
-			identifier: method.notFound
-			count: 1
-			path: tests/Feature/Snapshot/SnapshotAsserts/RemoveWhitespaceInEmptyRowsTest.php
-
-		-
-			message: '#^Call to an undefined method class@anonymous/tests/Feature/Snapshot/SnapshotAsserts/RemoveWhitespaceInEmptyRowsTest\.php\:26\:\:assertMatchesHtmlSnapshot\(\)\.$#'
-			identifier: method.notFound
-			count: 1
-			path: tests/Feature/Snapshot/SnapshotAsserts/RemoveWhitespaceInEmptyRowsTest.php
 
 		-
 			message: '#^PHPDoc type array\<int, string\> of property DejwCake\\TestingKit\\Tests\\Models\\TestAdminUserModel\:\:\$fillable is not covariant with PHPDoc type list\<string\> of overridden property Illuminate\\Database\\Eloquent\\Model\:\:\$fillable\.$#'
