@@ -9,7 +9,7 @@ use Illuminate\Support\Collection;
 use InvalidArgumentException;
 use OpenApi\Annotations as OA;
 use OpenApi\Context;
-use OpenApi\Generator;
+use OpenApi\Undefined;
 
 use function array_key_exists;
 use function count;
@@ -184,7 +184,7 @@ final class Util
         $nested = $parent::$_nested;
         $property = $nested[$class];
 
-        if ($parent->{$property} === null || $parent->{$property} === Generator::UNDEFINED) {
+        if ($parent->{$property} === null || $parent->{$property} === Undefined::UNDEFINED) {
             $parent->{$property} = self::createChild($parent, $class, $properties);
         }
 
@@ -214,7 +214,7 @@ final class Util
 
         if (count($properties)) {
             $key = self::searchCollectionItem(
-                $parent->{$collection} && $parent->{$collection} !== Generator::UNDEFINED ? $parent->{$collection} : [],
+                $parent->{$collection} && $parent->{$collection} !== Undefined::UNDEFINED ? $parent->{$collection} : [],
                 $properties,
             );
         }
@@ -246,7 +246,7 @@ final class Util
         [$collection, $property] = $nested[$class];
 
         $key = self::searchIndexedCollectionItem(
-            $parent->{$collection} && $parent->{$collection} !== Generator::UNDEFINED ? $parent->{$collection} : [],
+            $parent->{$collection} && $parent->{$collection} !== Undefined::UNDEFINED ? $parent->{$collection} : [],
             $property,
             $value,
         );
@@ -298,7 +298,7 @@ final class Util
         string $class,
         array $properties = [],
     ): int {
-        if ($parent->{$collection} === Generator::UNDEFINED) {
+        if ($parent->{$collection} === Undefined::UNDEFINED) {
             $parent->{$collection} = [];
         }
 
@@ -637,7 +637,7 @@ final class Util
         if (is_string($type) && str_starts_with($type, '[')) {
             $innerType = substr($type, 1, -1);
 
-            if (!$annotation->{$propertyName} || $annotation->{$propertyName} === Generator::UNDEFINED) {
+            if (!$annotation->{$propertyName} || $annotation->{$propertyName} === Undefined::UNDEFINED) {
                 $annotation->{$propertyName} = [];
             }
 

@@ -17,7 +17,7 @@ final class FailUnsupportedUserTest extends TestCase
         // setUp already fired and dispatched the failure, so we re-trigger it
         // here for a clean exception assertion.
         $this->expectException(AssertionFailedError::class);
-        $this->expectExceptionMessage('Allowed are: anonymous|customer|admin-user');
+        $this->expectExceptionMessageIsOrContains('Allowed are: anonymous|customer|admin-user');
 
         $this->resolveContextFromAttributes();
     }

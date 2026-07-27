@@ -38,7 +38,7 @@ final class AssertValidOpenApiResponseForRouteTest extends TestCase
         $response = $this->getJson('/api/items');
 
         $this->expectException(AssertionFailedError::class);
-        $this->expectExceptionMessage('OpenApi Validation failed');
+        $this->expectExceptionMessageIsOrContains('OpenApi Validation failed');
 
         $this->assertValidOpenApiResponseForRoute('GET', 'api/items/index', $response);
     }

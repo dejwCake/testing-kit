@@ -34,4 +34,20 @@ final class AssertMatchesViewSnapshotTest extends TestCase
 
         $this->assertMatchesViewSnapshot($html);
     }
+
+    public function testNormalisesTheInertiaAssetVersionInBothEncodings(): void
+    {
+        $html = <<<'HTML'
+            <!DOCTYPE html>
+            <html>
+            <head><title>Snapshot</title></head>
+            <body>
+                <div id="app" data-page="{&quot;component&quot;:&quot;Landing&quot;,&quot;url&quot;:&quot;/sk&quot;,&quot;version&quot;:&quot;1832e26064860ea342e89b2e109f3540&quot;}"></div>
+                <script>{"component":"Landing","url":"/sk","version":"aefc9bfe8637605a3181af1d08479768"}</script>
+            </body>
+            </html>
+            HTML;
+
+        $this->assertMatchesViewSnapshot($html);
+    }
 }

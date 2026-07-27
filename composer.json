@@ -28,13 +28,13 @@
         "nyholm/psr7": "^1.8",
         "spatie/phpunit-snapshot-assertions": "^5.4",
         "symfony/psr-http-message-bridge": "^8.1",
-        "zircote/swagger-php": "^6.1"
+        "zircote/swagger-php": "^6.5"
     },
     "require-dev": {
         "larastan/larastan": "^3.9",
         "orchestra/testbench": "^11.1",
         "phpunit/phpunit": "^13.1",
-        "spatie/laravel-permission": "^8.0"
+        "spatie/laravel-permission": "^8.3"
     },
     "autoload": {
         "psr-4": {

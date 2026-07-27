@@ -63,6 +63,19 @@ trait SnapshotAsserts
         $mainContent = $this->change($mainContent, '/"checksum":"([0-9a-zA-Z]*)"/', '"checksum":"checksum%d"');
         $mainContent = $this->change($mainContent, '/"htmlHash":"([0-9a-zA-Z]*)"/', '"htmlHash":"htmlHash%d"');
 
+        // Inertia serialises its asset version into the page object, and that version is
+        // a hash of the Vite manifest. Without this, every snapshot of an Inertia page
+        // fails after an unrelated `npm run build`. Matches both the raw form (page
+        // object rendered inside a script tag) and the entity-escaped form (page object
+        // in a `data-page` attribute). Deliberately not anchored to Inertia's own keys,
+        // so a page prop that happens to be called `version` is normalised too — the
+        // same trade-off the `"id"` rule above already makes.
+        $mainContent = preg_replace(
+            '/(&quot;|")version(&quot;|"):(&quot;|")[^"&]*(&quot;|")/',
+            '$1version$2:$3version-replaced-in-snapshot$4',
+            $mainContent,
+        );
+
         // replace database auto-increment ids rendered as "#N" in text content (e.g. "Inquiry ID: #6")
         $mainContent = preg_replace('/(>\s*)#\d+(\s*[<])/', '$1#db-id-replaced-in-snapshot$2', $mainContent);
 

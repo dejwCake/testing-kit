@@ -27,6 +27,9 @@
     <rule ref="SlevomatCodingStandard.Classes.TraitUseSpacing.IncorrectLinesCountAfterLastUse">
         <exclude-pattern>tests/Feature/Snapshot/SnapshotAsserts/RemoveWhitespaceInEmptyRowsTest.php</exclude-pattern>
     </rule>
+    <rule ref="SlevomatCodingStandard.Files.LineLength.LineTooLong">
+        <exclude-pattern>tests/Feature/Snapshot/SnapshotAsserts/AssertMatchesViewSnapshotTest.php</exclude-pattern>
+    </rule>
 
     <rule ref="SlevomatCodingStandard.Files.TypeNameMatchesFileName">
         <properties>

@@ -34,7 +34,7 @@ final class AssertDownloadTest extends TestCase
         $response = $this->makeResponse('something-else; filename="dummy.pdf"');
 
         $this->expectException(AssertionFailedError::class);
-        $this->expectExceptionMessage('Response does not offer a file download');
+        $this->expectExceptionMessageIsOrContains('Response does not offer a file download');
 
         $this->assertDownload($response, 'dummy.pdf');
     }
@@ -44,7 +44,7 @@ final class AssertDownloadTest extends TestCase
         $response = $this->makeResponse('attachment; filename="other.pdf"');
 
         $this->expectException(AssertionFailedError::class);
-        $this->expectExceptionMessage('Expected file [dummy.pdf]');
+        $this->expectExceptionMessageIsOrContains('Expected file [dummy.pdf]');
 
         $this->assertDownload($response, 'dummy.pdf');
     }
