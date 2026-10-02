@@ -28,7 +28,6 @@ docker-compose.override.yml
 
 # AI tools
 .claude
-CLAUDE.md
 
 # Other
 TODO.md
