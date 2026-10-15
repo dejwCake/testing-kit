@@ -50,12 +50,11 @@ jobs:
       - uses: actions/checkout@v5
       - run: git config --global --add safe.directory "$GITHUB_WORKSPACE"
       - run: composer install --prefer-dist
-      - run: >-
-          phpmd
-          ./config,./src,./tests
-          text phpmd.xml
-          --suffixes php
-          --baseline-file phpmd.baseline.xml
+      - run: |
+          status=0
+          phpmd analyze --no-progress --format=github > phpmd-github.txt || status=$?
+          sed "s#file=$GITHUB_WORKSPACE/#file=#" phpmd-github.txt
+          exit $status
 
   tests:
     name: Tests
@@ -67,4 +66,7 @@ jobs:
       - uses: actions/checkout@v5
       - run: git config --global --add safe.directory "$GITHUB_WORKSPACE"
       - run: composer install --prefer-dist
-      - run: vendor/bin/phpunit
+      - run: |
+          vendor/bin/phpunit --coverage-text=coverage.txt
+          cat coverage.txt
+          { echo '### Coverage'; echo '```'; cat coverage.txt; echo '```'; } >> "$GITHUB_STEP_SUMMARY"
