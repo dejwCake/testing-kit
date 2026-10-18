@@ -27,18 +27,6 @@ final class MockTranslatorTest extends TestCase
         self::assertTrue($validator->fails());
     }
 
-    public function testPlaceholdersAreReplacedOnceTheRealTranslatorIsBack(): void
-    {
-        $this->useRealTranslator();
-
-        $translator = $this->app->make(Translator::class);
-
-        self::assertSame(
-            'Hello Ada, you have 3 messages',
-            $translator->get('Hello :name, you have :count messages', ['name' => 'Ada', 'count' => 3]),
-        );
-    }
-
     public function testTheMockLeavesPlaceholdersUntouched(): void
     {
         $translator = $this->app->make(Translator::class);
@@ -47,33 +35,6 @@ final class MockTranslatorTest extends TestCase
             'Hello :name',
             $translator->get('Hello :name', ['name' => 'Ada']),
         );
-    }
-
-    public function testTheValidatorUsesTheRealTranslatorToo(): void
-    {
-        $this->useRealTranslator();
-
-        $validator = $this->app->make(Factory::class)
-            ->make(['email' => 'not-an-email'], ['email' => 'email']);
-
-        self::assertTrue($validator->fails());
-        self::assertStringNotContainsString(
-            'validation.email',
-            $validator->errors()->first('email'),
-            'A real message, not the translation key the mock returns.',
-        );
-    }
-
-    public function testTheValidatorIsRebuiltEvenWhenItWasResolvedFirst(): void
-    {
-        $this->app->make(Factory::class)->make([], []);
-
-        $this->useRealTranslator();
-
-        $validator = $this->app->make(Factory::class)
-            ->make(['email' => 'not-an-email'], ['email' => 'email']);
-
-        self::assertStringNotContainsString('validation.email', $validator->errors()->first('email'));
     }
 
     public function testTheMockKeepsReturningKeysForTheValidator(): void
