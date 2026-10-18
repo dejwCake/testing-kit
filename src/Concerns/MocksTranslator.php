@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace DejwCake\TestingKit\Concerns;
 
 use Illuminate\Foundation\Testing\TestCase;
+use Illuminate\Translation\TranslationServiceProvider;
 use Illuminate\Translation\Translator;
 use Illuminate\Validation\Factory;
 use Mockery;
@@ -15,6 +16,16 @@ use Mockery;
 trait MocksTranslator
 {
     protected Translator|Mockery\MockInterface $translatorMocker;
+
+    protected function useRealTranslator(): void
+    {
+        $this->app->forgetInstance('translator');
+        $this->app->forgetInstance('translation.loader');
+
+        (new TranslationServiceProvider($this->app))->register();
+
+        $this->app->forgetInstance('validator');
+    }
 
     private function mockTranslator(): void
     {

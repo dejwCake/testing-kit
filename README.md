@@ -91,6 +91,36 @@ final class PostsControllerTest extends ApiTestCase
 
 `#[Context(user: 'admin-user')]` resolves the guard from `admin-auth.defaults.guard` (Spatie `HasRoles` then sees the admin guard, so the role lookup matches the admin-auth installation migration). The fixture admin user has `id` = `testing-kit.authenticated_user_id`.
 
+### Translations in tests
+
+Every base `TestCase` mocks the translator, so `trans()` and `__()` return the **key** and apply no
+replacements. That is deliberate: a suite should assert on functionality, not on what a translation
+file currently says, and stable keys are what keep snapshots readable when copy changes.
+
+The trade-off is that a placeholder mistake is invisible — `:nam` instead of `:name`, or a
+replacement key that does not match the line, renders exactly like a correct one, so nothing fails.
+When the interpolation *is* what you are testing, opt out for that test:
+
+```php
+public function testTheMessageFillsInEveryPlaceholder(): void
+{
+    $this->useRealTranslator();
+
+    $rendered = $this->app->make(ViewFactory::class)->make('mail.welcome', ['name' => 'Ada'])->render();
+
+    self::assertStringNotContainsString(':name', $rendered);
+    self::assertStringContainsString('Ada', $rendered);
+}
+```
+
+It applies for the rest of that test only; the next one gets the mock back. Keep asserting on values
+the test supplies rather than on the contents of a translation file, or you are back to tests that
+fail when someone rewords a sentence.
+
+The validator is rebuilt alongside the translator, so validation messages come from the same place —
+without that, a test could render real messages while `$validator->errors()` still returned
+`validation.*` keys.
+
 ## Issues
 
 If something is not working as expected, please open an issue in the main repository https://github.com/dejwCake/craftable.
